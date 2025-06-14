@@ -20,11 +20,18 @@ const mockTaxData = [
 const defaultIncome = 65000;
 const defaultTaxPaid = 8500;
 
+type Category = {
+  name: string;
+  description: string;
+  value: number;
+  color?: string;
+};
+
 export default function TaxImpactMVP() {
   const [step, setStep] = useState(1);
   const [income, setIncome] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showActions, setShowActions] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
