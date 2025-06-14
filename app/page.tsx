@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import styles from './styles/home.module.css';
 import { calculateTaxes, getTaxSummary, formatCurrency } from './utils/taxCalculator';
+import Image from 'next/image';
 
 // Updated 2024 Canadian government spending breakdown
 const SPENDING_CATEGORIES = [
@@ -145,6 +146,12 @@ export default function Home() {
   const [showActions, setShowActions] = useState(false);
   const [selectedCauses, setSelectedCauses] = useState<string[]>([]);
   const [chartType, setChartType] = useState<'pie' | 'bar'>('pie');
+  const [showShareImage, setShowShareImage] = useState(false);
+  const [showNewsImage, setShowNewsImage] = useState(false);
+
+  // Remove fade/factIndex logic and just show the first fact for marquee
+  const splashFacts = SPENDING_CATEGORIES.map(cat => `Did you know… ${(cat.percentage * 100).toFixed(0)}% of your taxes goes to ${cat.name}?`);
+  const marqueeText = splashFacts.join('   •   ');
 
   // Debug log for selectedCauses
   console.log('Home selectedCauses:', selectedCauses);
@@ -162,17 +169,20 @@ export default function Home() {
   const handleAction = (action: string) => {
     switch (action) {
       case 'learn':
-        window.open('https://www.canada.ca/en/services/taxes.html', '_blank');
+        setShowNewsImage((prev) => !prev);
+        setShowShareImage(false);
         break;
       case 'contact':
         window.open('https://www.figma.com/proto/gWblOhMYcrktGdCghNvxKM/Parliamentary-Newsletter?page-id=0%3A1&node-id=26-1535&viewport=-566%2C430%2C0.08&t=VHVDLXUnMytASPeV-1&scaling=min-zoom&content-scaling=fixed&starting-point-node-id=6%3A443&show-proto-sidebar=1', '_blank');
+        setShowShareImage(false);
         break;
       case 'share':
-        const shareText = encodeURIComponent(`I just learned where my tax dollars go! Check out this breakdown: ${window.location.href}`);
-        window.open(`https://twitter.com/intent/tweet?text=${shareText}`);
+        setShowShareImage((prev) => !prev);
+        setShowNewsImage(false);
         break;
       case 'feel':
         window.open('https://www.youtube.com/watch?v=kRBV_sllVvw', '_blank');
+        setShowShareImage(false);
         break;
     }
   };
@@ -201,12 +211,19 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {step === 1 && (
+        <div className={styles.splashMarqueeWrapper}>
+          <div className={styles.splashMarquee}>
+            <span>{marqueeText}</span>
+          </div>
+        </div>
+      )}
       <main className={styles.main}>
         {step === 1 && (
           <div className={styles.landingWrapper}>
             <div className={styles.landing}>
               <h1 className={styles.headline}>
-                Payback time
+              Payback time
               </h1>
               <p className={styles.subtitle}>
                 See where your tax dollars go and feel connected to the impact they make in your community.
@@ -251,7 +268,7 @@ export default function Home() {
         {step === 2 && (
           <div className={styles.dashboardWrapper}>
             <header className={styles.dashboardHeader}>
-              <h2>Payback time</h2>
+              <h2>💰 Payback time 💰</h2>
             </header>
             <div className={styles.dashboard}>
               {/* Left Column: Tax Summary + Chart */}
@@ -285,7 +302,7 @@ export default function Home() {
                   </button>
                 </div>
                 <div className={styles.chartContainer}>
-                  <ResponsiveContainer width="100%" height={400}>
+                  <ResponsiveContainer width="100%" height={500}>
                     {chartType === 'pie' ? (
                       <PieChart>
                         <Pie
@@ -344,6 +361,9 @@ export default function Home() {
                       </BarChart>
                     )}
                   </ResponsiveContainer>
+                  <div className={styles.chartSourceNote}>
+                    Percentages are based on <a href="https://www150.statcan.gc.ca/n1/daily-quotidien/241127/cg-a002-eng.htm" target="_blank" rel="noopener noreferrer">Statistics Canada, 2023 government expenses by function</a>.
+                  </div>
                 </div>
               </div>
               {/* Right Column: Category Info + Nudges + Actions */}
@@ -429,6 +449,19 @@ export default function Home() {
                       💙 Feel Better
                     </button>
                   </div>
+                  {showNewsImage && (
+                    <div className={styles.shareImageWrapper}>
+                      <Image src="/payback-news.png" alt="Learn more news preview" width={800} height={400} style={{ width: '100%', height: 'auto', margin: '2rem 0 0 0', display: 'block' }} />
+                    </div>
+                  )}
+                  {showShareImage && (
+                    <div className={styles.overlay} onClick={() => setShowShareImage(false)}>
+                      <div className={styles.overlayContent} onClick={e => e.stopPropagation()}>
+                        <button className={styles.overlayClose} onClick={() => setShowShareImage(false)} aria-label="Close">✕</button>
+                        <Image src="/payback-share-message.png" alt="Share message preview" width={800} height={400} style={{ width: '100%', height: 'auto', display: 'block', borderRadius: '16px' }} />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <button 
                   onClick={() => setStep(1)}
